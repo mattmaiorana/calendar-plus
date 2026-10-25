@@ -36,6 +36,7 @@ import {
 } from "./ui/stores";
 import {
   createFeatureImageSource,
+  createMoodEmojiSource,
   customTagsSource,
   secondDailyNoteSource,
   streakSource,
@@ -126,6 +127,7 @@ export default class CalendarView extends ItemView {
       tasksSource,
       secondDailyNoteSource,
       createFeatureImageSource(this.app),
+      createMoodEmojiSource(this.app),
     ];
     this.app.workspace.trigger(TRIGGER_ON_OPEN, sources);
 
@@ -605,17 +607,19 @@ export default class CalendarView extends ItemView {
 
   private onMetadataCacheChanged = (file: TFile): void => {
     if (!this.app.workspace.layoutReady || !this.calendar) return;
-    if (!this.settings.featureImage.enabled) return;
+    const { featureImage, moodEmoji } = this.settings;
+    if (!featureImage.enabled && !moodEmoji.enabled) return;
     // Re-tick when a daily or weekly note's metadata changes (e.g. the user
-    // edits the `banner` frontmatter property). vault.modify fires before the
-    // cache updates, so this handler is the reliable post-update trigger for
-    // frontmatter-driven featured images.
+    // edits the `banner` or `mood` frontmatter property). vault.modify fires
+    // before the cache updates, so this handler is the reliable post-update
+    // trigger for frontmatter-driven featured images and mood emoji.
     const isDaily =
       this.settings.daily.enabled &&
       helperGetDateFromFile(file, "daily", this.settings.daily.format);
     const isWeekly =
+      featureImage.enabled &&
       this.settings.weekly.enabled &&
-      this.settings.featureImage.showForWeekly &&
+      featureImage.showForWeekly &&
       helperGetDateFromFile(file, "weekly", this.settings.weekly.format);
     if (isDaily || isWeekly) {
       // The metadata cache is now authoritative for this note; drop any memo

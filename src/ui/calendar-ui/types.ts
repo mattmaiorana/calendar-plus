@@ -11,6 +11,8 @@ export interface IDayMetadata {
   dots?: IDot[];
   /** `app://` resource URL from vault.getResourcePath, or undefined for no image. */
   backgroundImage?: string;
+  /** Single emoji shown under the date (from a daily note frontmatter property). */
+  emoji?: string;
 }
 
 export interface ICalendarSource {

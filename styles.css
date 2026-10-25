@@ -73,6 +73,13 @@
   background-color: var(--color-background-weekend);
 }
 
+/* Reserve one emoji line in every day cell while mood emoji is on, so weeks
+   with and without a mood keep the same row height. The empty .day-emoji
+   has no height when the feature is off. */
+.calendar-plus-wrapper.mood-emoji-enabled #calendar-container .day-emoji {
+  min-height: 1.2em;
+}
+
 /* Second daily note dot rendered at half opacity to visually distinguish
    it from the primary daily note dot without introducing a new color. */
 .calendar-plus-wrapper #calendar-container .dot.filled.second-daily {

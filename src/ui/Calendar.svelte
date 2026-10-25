@@ -221,6 +221,7 @@
   class:quarterly-enabled={$settings.quarterly.enabled}
   class:yearly-enabled={$settings.yearly.enabled}
   class:weekend-shading-enabled={$settings.shadeWeekendColumns}
+  class:mood-emoji-enabled={$settings.moodEmoji.enabled}
 >
   <CalendarBase
     {sources}

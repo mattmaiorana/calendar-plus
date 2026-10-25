@@ -48,6 +48,15 @@ export interface FeatureImageSettings {
   hiddenNotes: string[];
 }
 
+export interface MoodEmojiSettings {
+  enabled: boolean;
+  /**
+   * Daily note frontmatter property to read. The first emoji of its value is
+   * shown under the date (`mood: 🙂 good` → 🙂).
+   */
+  property: string;
+}
+
 export interface ISettings {
   weekStart: IWeekStartOption;
   shouldConfirmBeforeCreate: boolean;
@@ -100,6 +109,7 @@ export interface ISettings {
   yearly: PeriodicNoteSettings;
   secondDaily: PeriodicNoteSettings;
   featureImage: FeatureImageSettings;
+  moodEmoji: MoodEmojiSettings;
 }
 
 const weekdays = [
@@ -169,6 +179,10 @@ export const defaultSettings = Object.freeze({
     showForWeekly: true,
     hiddenNotes: [],
   },
+  moodEmoji: {
+    enabled: false,
+    property: "mood",
+  },
 });
 
 export class CalendarSettingsTab extends PluginSettingTab {
@@ -198,6 +212,7 @@ export class CalendarSettingsTab extends PluginSettingTab {
     this.addShowYearOverviewSetting();
     this.displayWeekendSection();
     this.displayFeatureImageSection();
+    this.displayMoodEmojiSection();
 
     new Setting(this.containerEl).setName("Periodic notes").setHeading();
     this.containerEl.createEl("p", {
@@ -453,6 +468,49 @@ export class CalendarSettingsTab extends PluginSettingTab {
         toggle.onChange(async (value) => {
           await this.plugin.writeOptions((prev) => ({
             featureImage: { ...prev.featureImage, showForWeekly: value },
+          }));
+        });
+      });
+  }
+
+  private displayMoodEmojiSection(): void {
+    const sectionEl = this.containerEl.createDiv();
+    this.renderMoodEmojiSection(sectionEl);
+  }
+
+  private renderMoodEmojiSection(sectionEl: HTMLElement): void {
+    sectionEl.empty();
+
+    new Setting(sectionEl).setName("Mood emoji").setHeading();
+
+    new Setting(sectionEl)
+      .setName("Enable")
+      .setDesc(
+        "Show an emoji from a daily note frontmatter property under the date."
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.options.moodEmoji.enabled);
+        toggle.onChange(async (value) => {
+          await this.plugin.writeOptions((prev) => ({
+            moodEmoji: { ...prev.moodEmoji, enabled: value },
+          }));
+          this.renderMoodEmojiSection(sectionEl);
+        });
+      });
+
+    if (!this.plugin.options.moodEmoji.enabled) return;
+
+    new Setting(sectionEl)
+      .setName("Frontmatter property")
+      .setDesc(
+        "Property to read. The first emoji of its value is shown, e.g. mood: 🙂 good shows 🙂."
+      )
+      .addText((text) => {
+        text.setPlaceholder("mood");
+        text.setValue(this.plugin.options.moodEmoji.property);
+        text.onChange(async (value) => {
+          await this.plugin.writeOptions((prev) => ({
+            moodEmoji: { ...prev.moodEmoji, property: value.trim() },
           }));
         });
       });

@@ -101,6 +101,13 @@ Optionally show a note's image as the calendar cell background, turning your cal
 
 A dark gradient keeps the date number and dots readable over any image, and the selected day shows a translucent accent overlay so the image stays visible.
 
+#### Mood emoji
+
+Optionally show an emoji from a daily note's frontmatter under the date. Configure under Settings → Calendar Plus → Mood emoji:
+
+- **Enable** turns mood emoji on for daily-note cells.
+- **Frontmatter property** is the property to read (default `mood`). The first emoji of its value is shown, so `mood: 🙂 good` shows 🙂. Values that don't start with an emoji are ignored.
+
 #### Advanced
 
 - **Override locale**: force a specific locale for date formatting, independent of your system locale.
