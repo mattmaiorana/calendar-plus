@@ -26,7 +26,13 @@ import { debounce } from "obsidian";
 //   downscaled thumbnail, and is fully regenerable/disposable.
 
 const MAX_DIM = 128; // longest thumbnail edge in px (cells are ~40px; this is retina-safe)
-const JPEG_QUALITY = 0.72;
+const DEFAULT_IMAGE_CONFIG = "webp";
+const IMAGE_CONFIGS = {
+  "jpeg": { extension: ".jpg", type: "image/jpeg", quality: 0.72 },
+  "png": { extension: ".png", type: "image/png", quality: 1 },
+  "webp": { extension: ".webp", type: "image/webp", quality: 0.72 },
+};
+const IMAGE_CONFIG = IMAGE_CONFIGS[DEFAULT_IMAGE_CONFIG];
 const MAX_CONCURRENT_GENERATIONS = 3;
 
 let app: App | null = null;
@@ -239,8 +245,8 @@ export async function pruneThumbnailsExcept(inUseFiles: TFile[]): Promise<void> 
     const listing = await a.vault.adapter.list(dir);
     for (const full of listing.files) {
       const name = full.substring(full.lastIndexOf("/") + 1);
-      if (!name.endsWith(".jpg")) continue;
-      if (!keep.has(name.slice(0, -4))) await a.vault.adapter.remove(full);
+      if (!name.endsWith(IMAGE_CONFIG.extension)) continue;
+      if (!keep.has(name.slice(0, IMAGE_CONFIG.extension.length * -1))) await a.vault.adapter.remove(full);
     }
   } catch {
     // best-effort
@@ -270,10 +276,10 @@ async function loadFromDisk(
   dir: string,
   key: string
 ): Promise<string | null> {
-  const path = `${dir}/${key}.jpg`;
+  const path = `${dir}/${key}${IMAGE_CONFIG.extension}`;
   if (!(await a.vault.adapter.exists(path))) return null;
   const bytes = await a.vault.adapter.readBinary(path);
-  return URL.createObjectURL(new Blob([bytes], { type: "image/jpeg" }));
+  return URL.createObjectURL(new Blob([bytes], { type: IMAGE_CONFIG.type }));
 }
 
 async function generateAndStore(
@@ -299,10 +305,10 @@ async function generateAndStore(
   if (!thumbBytes) return null;
 
   await ensureDir(a, dir);
-  await a.vault.adapter.writeBinary(`${dir}/${key}.jpg`, thumbBytes);
+  await a.vault.adapter.writeBinary(`${dir}/${key}${IMAGE_CONFIG.extension}`, thumbBytes);
   void pruneStaleSiblings(a, dir, file, key);
 
-  return URL.createObjectURL(new Blob([thumbBytes], { type: "image/jpeg" }));
+  return URL.createObjectURL(new Blob([thumbBytes], { type: IMAGE_CONFIG.type }));
 }
 
 async function generateThumbnail(srcBytes: ArrayBuffer): Promise<ArrayBuffer | null> {
@@ -328,7 +334,7 @@ async function generateThumbnail(srcBytes: ArrayBuffer): Promise<ArrayBuffer | n
     ctx.drawImage(bitmap, 0, 0, w, h);
 
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
+      canvas.toBlob(resolve, IMAGE_CONFIG.type, IMAGE_CONFIG.quality)
     );
     return blob ? await blob.arrayBuffer() : null;
   } catch {
@@ -348,7 +354,7 @@ async function pruneStaleSiblings(
 ): Promise<void> {
   try {
     const prefix = `${hashPath(file.path)}-`;
-    const current = `${currentKey}.jpg`;
+    const current = `${currentKey}${IMAGE_CONFIG.extension}`;
     const listing = await a.vault.adapter.list(dir);
     for (const full of listing.files) {
       const name = full.substring(full.lastIndexOf("/") + 1);
